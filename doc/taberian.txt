@@ -17,7 +17,7 @@ CONTENTS                                                     *taberian-contents*
 INTRO                                                           *taberian-intro*
 
 Taberian applies the concept of tabs to VIM windows. Each VIM window (split)
-may contain a number of buffers, so user can switch between them, rearrange,
+may contain a number of tabs, so user can switch between them, rearrange,
 close etc.
 
 Taberian works out of the box and does not require any configuration. If there
