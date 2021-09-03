@@ -9,19 +9,19 @@ may contain a number of tabs, so user can switch between them, rearrange,
 close etc.
 
 Taberian works out of the box and does not require any configuration. If there
-are no tabs created then Taberian will not display anything. To start, create a
-new tab via `<C-W>t`.
+are less than two tabs then Taberian will not display anything. To start, create
+a new tab via `<C-W>t`.
 
 Default mappings:
 
 | Mapping | Description |
 | --- | --- |
-| `<C-W>t` | Create a new tab by cloning the current tab and place iton the right from the current tab. |
-| `<C-W>x` | Close the current tab and switch to the tab on the left, if any, otherwise switch to the tab on the right. |
-| `<C-W>m` | Go to tab on the left side of the current tab. |
-| `<C-W>,` | Go to tab on the right side of the current tab. |
-| `<C-W>.` | Move current tab one position to the left. |
-| `<C-W>/` | Move current tab one position to the right. |
+| `<C-W>t` | Create a new tab by cloning the current tab. |
+| `<C-W>x` | Close the current tab. |
+| `<C-W>m` | Go to tab on the left. |
+| `<C-W>,` | Go to tab on the right. |
+| `<C-W>.` | Move the current tab one position to the left. |
+| `<C-W>/` | Move the current tab one position to the right. |
 | `<A-1>`  | Go to tab 1. |
 | `<A-2>`  | Go to tab 2. |
 | `<A-3>`  | Go to tab 3. |
