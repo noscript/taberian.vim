@@ -1,0 +1,118 @@
+*taberian.txt*  Clickable tabs per window
+
+Author:         Sergey Vlasov <sergey@vlasov.me>
+Licence:        Vim licence, see |license|
+Site:           https://github.com/noscript/taberian.vim
+Version:        0.1
+
+================================================================================
+CONTENTS                                                     *taberian-contents*
+
+    Intro...................................................|taberian-intro|
+    Mappings.............................................|taberian-mappings|
+    Commands.............................................|taberian-commands|
+    Variables...........................................|taberian-variables|
+
+================================================================================
+INTRO                                                           *taberian-intro*
+
+Taberian applies the concept of tabs to VIM windows. Each VIM window (split)
+may contain a number of buffers, so user can switch between them, rearrange,
+close etc.
+
+Taberian works out of the box and does not require any configuration. If there
+are no tabs created then Taberian will not display anything. To start create a
+new tab via CTRL-W t (see |taberian-new-tab|).
+
+================================================================================
+MAPPINGS                                                     *taberian-mappings*
+
+It is possible to switch between tabs using mouse clicks or via these default
+mappings:
+                                                              *taberian-new-tab*
+<C-W>t               Create a new tab by cloning the current tab and place it
+                     on the right from the current tab.
+
+                                                            *taberian-close-tab*
+<C-W>x               Close the current tab and switch to the tab on the left,
+                     if any, otherwise switch to the tab on the right.
+
+                                                        *taberian-goto-left-tab*
+<C-W>m               Go to tab on the left side of the current tab.
+
+                                                       *taberian-goto-right-tab*
+<C-W>,               Go to tab on the right side of the current tab.
+
+                                                        *taberian-move-tab-left*
+<C-W>.               Move current tab one position to the left.
+
+                                                       *taberian-move-tab-right*
+<C-W>/               Move current tab one position to the right.
+
+<A-1>                Go to tab 1.
+<A-2>                Go to tab 2.
+<A-3>                Go to tab 3.
+<A-4>                Go to tab 4.
+<A-5>                Go to tab 5.
+<A-6>                Go to tab 6.
+<A-7>                Go to tab 7.
+<A-8>                Go to tab 8.
+<A-9>                Go to tab 9.
+
+                                                    *taberian-goto-previous-tab*
+<C-Tab> or <A-0>     Go to previous tab, useful to switch between two recent
+                     tabs.
+
+If you wish to not use the default mappings, disable them by defining
+|g:taberian_no_default_mappings| variable. You can define your own mapping
+using this example:
+
+>
+    map <silent> <C-W>t  <Cmd>TaberianNewTab<CR>
+    map <silent> <C-W>x  <Cmd>TaberianCloseCurrentTab<CR>
+    map <silent> <C-W>m  <Cmd>TaberianGotoLeftTab<CR>
+    map <silent> <C-W>,  <Cmd>TaberianGotoRightTab<CR>
+    map <silent> <C-W>.  <Cmd>TaberianMoveCurrentTabLeft<CR>
+    map <silent> <C-W>/  <Cmd>TaberianMoveCurrentTabRight<CR>
+    map <silent> <A-1>   <Cmd>TaberianGoToTabNr 0<CR>
+    map <silent> <A-2>   <Cmd>TaberianGoToTabNr 1<CR>
+    map <silent> <A-3>   <Cmd>TaberianGoToTabNr 2<CR>
+    map <silent> <A-4>   <Cmd>TaberianGoToTabNr 3<CR>
+    map <silent> <A-5>   <Cmd>TaberianGoToTabNr 4<CR>
+    map <silent> <A-6>   <Cmd>TaberianGoToTabNr 5<CR>
+    map <silent> <A-7>   <Cmd>TaberianGoToTabNr 6<CR>
+    map <silent> <A-8>   <Cmd>TaberianGoToTabNr 7<CR>
+    map <silent> <A-9>   <Cmd>TaberianGoToTabNr 8<CR>
+    map <silent> <C-Tab> <Cmd>TaberianGoToPreviousTab<CR>
+    map <silent> <A-0>   <Cmd>TaberianGoToPreviousTab<CR>
+>
+
+================================================================================
+COMMANDS                                                     *taberian-commands*
+
+:TaberianNewTab                 See |taberian-new-tab|.
+
+:TaberianCloseCurrentTab        See |taberian-close-tab|.
+
+:TaberianGotoLeftTab            See |taberian-goto-left-tab|.
+
+:TaberianGotoRightTab           See |taberian-goto-right-tab|.
+
+:TaberianMoveCurrentTabLeft     See |taberian-move-tab-left|.
+
+:TaberianMoveCurrentTabRight    See |taberian-move-tab-right|.
+
+:TaberianGoToTabNr N            Go to tab with index N. Taberian tab indices
+                                are zero-based, use 0 to go to the first tab.
+
+:TaberianGoToPreviousTab        See |taberian-goto-previous-tab|.
+
+================================================================================
+VARIABLES                                                   *taberian-variables*
+
+*g:taberian_no_default_mappings*      Define this variable to prevent the
+                                      default mappings from being created.
+Example:
+>
+    let g:taberian_no_default_mappings = v:true
+<
