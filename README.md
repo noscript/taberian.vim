@@ -9,7 +9,7 @@ may contain a number of tabs, so user can switch between them, rearrange,
 close etc.
 
 Taberian works out of the box and does not require any configuration. If there
-are no tabs created then Taberian will not display anything. To start create a
+are no tabs created then Taberian will not display anything. To start, create a
 new tab via `<C-W>t`.
 
 Default mappings:
