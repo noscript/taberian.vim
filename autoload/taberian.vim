@@ -24,6 +24,14 @@ function! s:underscored(str)
   return a:str->str2list()->map({_, val -> list2str([val, 818])})->join('')
 endfunction
 
+function! s:bufname(bufnr)
+  let bufname = bufname(a:bufnr)->fnamemodify(':t')
+  if empty(bufname)
+    return '[No Name]'
+  endif
+  return bufname
+endfunction
+
 " tab indexing is zero based
 function! s:init_once()
   if !exists('w:taberian')
@@ -144,7 +152,7 @@ function! taberian#render_current_window()
   endif
 
   " convert bufnr to tab name:
-  call map(tabs, {key, tab -> printf('%d %s ᴮ%d', key + 1, fnamemodify(bufname(tab.bufnr), ':t'), tab.bufnr)})
+  call map(tabs, {key, tab -> printf('%d %s ᴮ%d', key + 1, s:bufname(tab.bufnr), tab.bufnr)})
 
   " make sure there is enough room:
   let win_width = winwidth(0)
