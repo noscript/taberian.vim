@@ -198,3 +198,17 @@ function! taberian#render_all_windows()
     call win_execute(winid, 'call taberian#update_current_window()')
   endfor
 endfunction
+
+function! taberian#confirm_window_close()
+  if len(w:taberian.tabs) > 1
+    echo 'This window has ' . len(w:taberian.tabs) . ' tabs open: '
+    echo w:taberian.tabs->deepcopy()->map({_, tab -> fnamemodify(bufname(tab.bufnr), ':t')})->string()
+    echo 'Are you sure you wish to close the window (yN):'
+    let choice = nr2char(getchar())
+    redraw
+    if choice !=# 'y'
+      return
+    endif
+  endif
+  close
+endfunction

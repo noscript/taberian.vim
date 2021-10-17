@@ -22,6 +22,7 @@ Default mappings:
 | `<C-W>,` | Go to tab on the right. |
 | `<C-W>.` | Move the current tab one position to the left. |
 | `<C-W>/` | Move the current tab one position to the right. |
+| `<C-W>c` | Check if there are any taberian tabs present and ask user to confirm closing the window. |
 | `<A-1>`  | Go to tab 1. |
 | `<A-2>`  | Go to tab 2. |
 | `<A-3>`  | Go to tab 3. |
@@ -50,6 +51,7 @@ map <silent> <C-W>m  <Cmd>TaberianGotoLeftTab<CR>
 map <silent> <C-W>,  <Cmd>TaberianGotoRightTab<CR>
 map <silent> <C-W>.  <Cmd>TaberianMoveCurrentTabLeft<CR>
 map <silent> <C-W>/  <Cmd>TaberianMoveCurrentTabRight<CR>
+map <silent> <C-W>c  <Cmd>TaberianConfirmWindowClose<CR>
 map <silent> <A-1>   <Cmd>TaberianGoToTabNr 0<CR>
 map <silent> <A-2>   <Cmd>TaberianGoToTabNr 1<CR>
 map <silent> <A-3>   <Cmd>TaberianGoToTabNr 2<CR>
