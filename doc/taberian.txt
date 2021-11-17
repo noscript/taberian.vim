@@ -3,7 +3,7 @@
 Author:         Sergey Vlasov <sergey@vlasov.me>
 Licence:        Vim licence, see |license|
 Site:           https://github.com/noscript/taberian.vim
-Version:        0.1
+Version:        0.3
 
 ================================================================================
 CONTENTS                                                     *taberian-contents*

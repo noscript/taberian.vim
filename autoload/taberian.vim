@@ -21,7 +21,7 @@ function! s:winbar_width(tabs)
 endfunction
 
 function! s:underscored(str)
-  return a:str->str2list()->map({_, val -> list2str([val, 818])})->join('')
+  return a:str->str2list()->map({_, val -> list2str([val, 0x0332])})->join('')
 endfunction
 
 function! s:bufname(bufnr)
