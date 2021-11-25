@@ -3,8 +3,6 @@ if exists("g:taberian_loaded")
 endif
 const g:taberian_loaded = v:true
 
-let &guiligatures = list2str(range(32, 126))
-
 augroup Taberian
   autocmd!
   autocmd WinEnter,BufEnter,VimResized,SessionLoadPost * call taberian#render_all_windows()
