@@ -3,7 +3,7 @@
 Author:         Sergey Vlasov <sergey@vlasov.me>
 Licence:        Vim licence, see |license|
 Site:           https://github.com/noscript/taberian.vim
-Version:        0.3
+Version:        0.4
 
 ================================================================================
 CONTENTS                                                     *taberian-contents*
@@ -11,6 +11,7 @@ CONTENTS                                                     *taberian-contents*
     Intro...................................................|taberian-intro|
     Mappings.............................................|taberian-mappings|
     Commands.............................................|taberian-commands|
+    Functions...........................................|taberian-functions|
     Variables...........................................|taberian-variables|
 
 ================================================================================
@@ -111,6 +112,19 @@ COMMANDS                                                     *taberian-commands*
                                 are zero-based, use 0 to go to the first tab.
 
 :TaberianGoToPreviousTab        See |taberian-goto-previous-tab|.
+ 
+================================================================================
+FUNCTIONS                                                   *taberian-functions*
+
+taberian#state_export()                                *taberian#state_export()*
+                    Returns a serialized state of Taberian that later can be
+                    imported back using |taberian#state_import()|. Useful to
+                    restore Taberian state after VIM restart.
+
+taberian#state_import({state})                         *taberian#state_import()*
+                    Restores Taberian state, previously exported with
+                    |taberian#state_export()|.
+
 
 ================================================================================
 VARIABLES                                                   *taberian-variables*

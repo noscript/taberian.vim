@@ -212,3 +212,68 @@ function! taberian#confirm_window_close()
   endif
   close
 endfunction
+
+function! taberian#state_export() abort
+  let state = []
+  for tabinfo in gettabinfo()
+    let tab = #{
+      \ tabnr: tabinfo.tabnr,
+      \ windows: [],
+    \ }
+    for winid in tabinfo.windows
+      let win = gettabwinvar(tab.tabnr, winid, 'taberian', {})->deepcopy()
+      if empty(win) || len(win.tabs) < 2 " only save if more than 1 tab
+        continue
+      endif
+
+      " convert bufnrs to file paths:
+      for tab in win.tabs
+        let tab.buffer = fnamemodify(bufname(tab.bufnr), ':~:.')
+        unlet tab.bufnr
+      endfor
+
+      let win.winnr = win_id2tabwin(winid)[1]
+      unlet win.prev_nr
+
+      call add(tab.windows, win)
+    endfor
+    if !empty(tab.windows)
+      call add(state, tab)
+    endif
+  endfor
+  return state
+endfunction
+
+function! taberian#state_import(state)
+  for tabinfo in gettabinfo()
+    let tabnr = tabinfo.tabnr
+    let tabs = a:state->deepcopy()->filter({_, val -> val.tabnr == tabnr})
+    if empty(tabs)
+      continue
+    endif
+    let tab = tabs[0]
+
+    for winid in tabinfo.windows
+      let [_, winnr] = win_id2tabwin(winid)
+      let wins = tab.windows->deepcopy()->filter({_, val -> val.winnr == winnr})
+      if empty(wins)
+        continue
+      endif
+      let win = wins[0]
+
+      unlet win.winnr
+
+      " convert file paths to bufnrs:
+      for tab in win.tabs
+        execute 'badd ' . tab.buffer
+        let tab.bufnr = bufnr(tab.buffer)
+        unlet tab.buffer
+      endfor
+
+      let old_win = gettabwinvar(tabnr, winid, 'taberian', {})
+      call extend(old_win, win)
+      call settabwinvar(tabnr, winid, 'taberian', old_win)
+      call win_execute(winid, 'buffer ' . old_win.tabs[old_win.curr_nr].bufnr)
+    endfor
+  endfor
+endfunction
