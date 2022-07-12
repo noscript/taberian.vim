@@ -3,7 +3,7 @@
 Author:         Sergey Vlasov <sergey@vlasov.me>
 Licence:        Vim licence, see |license|
 Site:           https://github.com/noscript/taberian.vim
-Version:        0.4
+Version:        0.5
 
 ================================================================================
 CONTENTS                                                     *taberian-contents*
@@ -116,12 +116,12 @@ COMMANDS                                                     *taberian-commands*
 ================================================================================
 FUNCTIONS                                                   *taberian-functions*
 
-taberian#state_export()                                *taberian#state_export()*
+taberian#State_export()                                *taberian#State_export()*
                     Returns a serialized state of Taberian that later can be
                     imported back using |taberian#state_import()|. Useful to
                     restore Taberian state after VIM restart.
 
-taberian#state_import({state})                         *taberian#state_import()*
+taberian#State_import({state})                         *taberian#State_import()*
                     Restores Taberian state, previously exported with
                     |taberian#state_export()|.
 
@@ -133,5 +133,5 @@ VARIABLES                                                   *taberian-variables*
                                       default mappings from being created.
 Example:
 >
-    let g:taberian_no_default_mappings = v:true
+    g:taberian_no_default_mappings = true
 <

@@ -39,7 +39,7 @@ If you wish to not use the default mappings, disable them by defining
 `g:taberian_no_default_mappings` variable:
 
 ```vim
-let g:taberian_no_default_mappings = v:true
+g:taberian_no_default_mappings = true
 ```
 
 You can define your own mapping using this example:
