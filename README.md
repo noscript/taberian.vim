@@ -2,7 +2,7 @@
 
 Clickable tabs per VIM window.
 
-[![screenshot](/taberian.png)](https://user-images.githubusercontent.com/717109/131985507-4877c889-a2ef-4d41-90f9-b770b8912e65.mp4)
+[![screenshot](/taberian.png)](https://github.com/noscript/taberian.vim/assets/717109/58feee0e-a265-4454-b48f-ec236972d447)
 
 Taberian applies the concept of tabs to VIM windows. Each VIM window (split)
 may contain a number of tabs, so user can switch between them, rearrange,

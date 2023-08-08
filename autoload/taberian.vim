@@ -1,11 +1,32 @@
 vim9script
 
+# defaults:
+if !exists('g:taberian#hide_tab_index')
+  g:taberian#hide_tab_index = false
+endif
+if !exists('g:taberian#hide_bufnr')
+  g:taberian#hide_bufnr = false
+endif
+if !exists('g:taberian#separator')
+  g:taberian#separator = '▕' # Right One Eighth Block U+2595
+endif
+
+var s_sel_prop = 'taberian_sel_prop'
+export def On_Colorscheme()
+  hlset([
+    {name: 'TaberianTab', linksto: 'TabLine'},
+    {name: 'TaberianTabSel', linksto: 'TabLineSel'},
+  ])
+  silent! prop_type_add(s_sel_prop, {highlight: 'TaberianTabSel'})
+enddef
+On_Colorscheme()
+
 def S__create_tab(bufnr__a: number): dict<any>
-  var tab = {
-    bufnr: -1,
+  return {
+    bufnr: bufnr__a,
+    title: '',
+    col_in_popup: -1,
   }
-  tab.bufnr = bufnr__a
-  return tab
 enddef
 
 def S__clamp(value__a: number, min__a: number, max__a: number): number
@@ -18,12 +39,8 @@ def S__clamp(value__a: number, min__a: number, max__a: number): number
   endif
 enddef
 
-def S__winbar_width(tabs__a: list<any>): number
-  return strdisplaywidth(join(tabs__a, '    ')) + 4 # + left\right padding
-enddef
-
-def S__underscored(str__a: string): string
-  return str__a->str2list()->map((_, val) => list2str([val, 0x0332]))->join('')
+def S__popup_line(tab_names__a: list<list<string>>): string
+  return tab_names__a->flattennew()->join('')
 enddef
 
 def S__bufname(bufnr__a: number): string
@@ -39,6 +56,7 @@ def S__init_once()
   if !exists('w:taberian')
     w:taberian = {
       tabs: [],
+      popup_id: -1,
       curr_nr: -1,
       prev_nr: -1,
     }
@@ -57,13 +75,15 @@ def S__update_current_window()
 enddef
 
 export def Create_tab()
+  var bufnr = bufnr('%')
+
   if len(w:taberian.tabs) < 2
     w:taberian.curr_nr = 0
-    w:taberian.tabs = [S__create_tab(bufnr('%'))]
+    w:taberian.tabs = [S__create_tab(bufnr)]
   endif
 
   ++w:taberian.curr_nr
-  insert(w:taberian.tabs, S__create_tab(bufnr('%')), w:taberian.curr_nr)
+  insert(w:taberian.tabs, S__create_tab(bufnr), w:taberian.curr_nr)
 
   doautocmd User TaberianChanged
 enddef
@@ -104,99 +124,203 @@ export def Move_current_tab_offset(offset__a: number)
   doautocmd User TaberianChanged
 enddef
 
-export def Close_current_tab()
+export def Close_tab(nr__a = w:taberian.curr_nr)
   if len(w:taberian.tabs) < 2 || w:taberian.curr_nr == -1
     return
   endif
 
-  var old_curr = w:taberian.curr_nr
-
-  if w:taberian.curr_nr > 0
-    Goto_tab_offset(-1)
-  else
-    Goto_tab_offset(+1)
+  if w:taberian.curr_nr == nr__a
+    if w:taberian.curr_nr > 0
+      Goto_tab_offset(-1)
+    else
+      Goto_tab_offset(+1)
+    endif
   endif
 
-  remove(w:taberian.tabs, old_curr)
-  if len(w:taberian.tabs) < 2
-    w:taberian.tabs = []
-    w:taberian.curr_nr = -1
+  remove(w:taberian.tabs, nr__a)
+
+  if nr__a < w:taberian.curr_nr
+    --w:taberian.curr_nr
   endif
+
   doautocmd User TaberianChanged
 enddef
 
-def S__tab_prototyperim(str__a: string, max__a: number, remainder__a: dict<number>): string
-  var max = max__a
-  var elipsis = ''
-  var len = strdisplaywidth(str__a)
-  if len > max
-    if remainder__a.value > 0
-      ++max
-      --remainder__a.value
+def S__on_popup_killed(popup_id__a: number, res__a: number)
+  if res__a != -1 # not force closed with Ctrl-C
+    return
+  endif
+
+  var winids = gettabinfo(tabpagenr())[0].windows
+  for winid in winids
+    var w = getwinvar(winid, 'taberian', {})
+    if empty(w) || w.popup_id != popup_id__a
+      continue
     endif
-  elseif len < max
-    remainder__a.value += max - len
-  endif
-  if len > max
-    elipsis = '…'
-    --max
-  endif
-  return strcharpart(str__a, 0, max) .. elipsis
+    w.popup_id = -1
+
+    var winid_bkp = win_getid()
+    noautocmd win_gotoid(winid)
+    Render_current_window()
+    noautocmd win_gotoid(winid_bkp)
+  endfor
 enddef
 
 export def Render_current_window()
   S__init_once()
-  aunmenu WinBar
-  var tabs = gettabwinvar(tabpagenr(), winnr(), 'taberian').tabs->deepcopy()
-  var ts_count = len(tabs)
-  if ts_count < 2 # render only if more than 1 tab
+  var tabs = gettabwinvar(tabpagenr(), winnr(), 'taberian').tabs
+  var tabs_count = len(tabs)
+  if tabs_count < 2 # render only if more than 1 tab
+    popup_hide(w:taberian.popup_id)
+    aunmenu WinBar
     return
   endif
 
-  # convert bufnr to tab name:
-  map(tabs, (key, tab) => printf('%d %s ᴮ%d', key + 1, S__bufname(tab.bufnr), tab.bufnr))
+  var wininfo = getwininfo(win_getid())[0]
+
+  # create empty WinBar:
+  if !wininfo.winbar
+    execute 'amenu WinBar.\  \ '
+  endif
+
+  # generate titles:
+  var title_items = []
+  for nr in range(tabs_count)
+    title_items += [[
+      ' ',                   # 0: left border
+      string(nr + 1),        # 1: tab index (1-based)
+      ' ',                   # 2: spacer
+      S__bufname(tabs[nr].bufnr), # 3: buffer name
+      ' ',                   # 4: spacer
+      'ᴮ' .. tabs[nr].bufnr, # 5: buffer number
+      g:taberian#separator,  # 6: right border
+    ]]
+  endfor
 
   # make sure there is enough room:
-  var win_width = winwidth(0)
-  if win_width < 2 # there is a maximized window
-    # create empty WinBar:
-    execute 'amenu WinBar.\  \ '
+  if wininfo.width < 2 # there is a maximized window
     return
   endif
-  var min_win_width = tabs->len() * (7 + 2 + 4) + 4 # 7: tab nr (2) + space + tab name (3 chars + '…')
-  if win_width < min_win_width
-    execute 'vertical resize ' .. min_win_width
+  var min_popup_width = tabs_count * (2 + 4) # 2 for borders, 4 for tab name (3 chars + '…')
+  if wininfo.width < min_popup_width
+    execute 'vertical resize ' .. min_popup_width
   endif
 
-  if S__winbar_width(tabs) > win_width
-    # drop bufnr:
-    map(tabs, (_, tab_name) => substitute(tab_name, '\(.*\) ᴮ.*', '\1', ''))
+  if exists('g:taberian#hide_tab_index') && g:taberian#hide_tab_index
+    for it in title_items
+      it[1] = '' # spacer
+      it[2] = '' # buf name
+    endfor
   endif
 
-  var max_bonus = 10
-  while S__winbar_width(tabs) > win_width
-    # trim the end:
-    var max_len = win_width / ts_count
-    var remainder = {value: win_width - max_len * ts_count}
-    map(tabs, (_, tab_name) => S__tab_prototyperim(tab_name, max_len - 4 + max_bonus, remainder)) # - padding
-    --max_bonus
+  if exists('g:taberian#hide_bufnr') && g:taberian#hide_bufnr || (S__popup_line(title_items)->strdisplaywidth() > wininfo.width)
+    for it in title_items
+      it[-3] = '' # spacer
+      it[-2] = '' # bufnr
+    endfor
+  endif
+
+  # if still too long:
+  var average_max_len = wininfo.width / tabs_count
+  while S__popup_line(title_items)->strdisplaywidth() > wininfo.width
+    var repay_chars = wininfo.width - tabs_count * average_max_len # unused chars due to rounding (max 1 char per tab)
+    for nr in range(tabs_count)
+      var max_len = average_max_len
+      if repay_chars > 0
+        --repay_chars
+        ++max_len
+      endif
+
+      var tab_len = strdisplaywidth(title_items[nr]->join(''))
+      if tab_len > max_len
+        var excess = tab_len - max_len + 1 # + 1 for elipsis
+        # buf name is at 3:
+        title_items[nr][3] = title_items[nr][3]->strcharpart(0, title_items[nr][3]->strdisplaywidth() - excess) .. '…'
+      endif
+    endfor
   endwhile
 
-  # mark current tab:
-  tabs[w:taberian.curr_nr] = S__underscored(tabs[w:taberian.curr_nr])
-  # escape whitespace and dots (including Unicode underscored):
-  map(tabs, (_, tab_name) => substitute(tab_name, '[ ̲.̲]', '\\&', 'g'))
+  var titles = []
+  var col = 1
+  for nr in range(tabs_count)
+    tabs[nr].col_in_popup = col
 
-  var nr = 0
-  for tab in tabs
-    execute 'amenu <silent> WinBar.' .. tab .. ' <ScriptCmd>taberian#Goto_tab_nr(' .. nr .. ')<CR>'
-    ++nr
+    var title = title_items[nr]->join('')
+    titles += [title]
+    var len = title->strwidth()
+    col += len
   endfor
+
+  if w:taberian.popup_id == -1
+    w:taberian.popup_id = popup_create(' ', {
+      hidden: true,
+      pos: 'topleft',
+      wrap: false,
+      highlight: 'TaberianTab',
+      filter: S__on_click,
+      callback: S__on_popup_killed,
+    })
+  endif
+
+  popup_settext(w:taberian.popup_id, titles->join(''))
+  popup_move(w:taberian.popup_id, {
+    col: wininfo.wincol,
+    line: wininfo.winrow,
+  })
+
+  var popup_bufnr = winbufnr(w:taberian.popup_id)
+  var cur_tab_title = titles[w:taberian.curr_nr]
+  var prop_col = 1
+  for i in range(tabs_count)
+    if w:taberian.curr_nr == i
+      break
+    endif
+    prop_col += titles[i]->len() # in bytes
+  endfor
+  var prop_len = cur_tab_title->len() # in bytes
+  prop_add(1, prop_col, {bufnr: popup_bufnr, length: prop_len, type: s_sel_prop})
+
+  popup_show(w:taberian.popup_id)
 enddef
 
-export def Render_all_windows()
+def S__on_click(popup_id__a: number, key__a: string): bool
+  if key__a != "\<LeftMouse>" && key__a != "\<MiddleMouse>"
+    return false
+  endif
+
+  var mousepos = getmousepos()
+  if mousepos.winid != popup_id__a
+    return false
+  endif
+
   var winids = gettabinfo(tabpagenr())[0].windows
   for winid in winids
+    var w = getwinvar(winid, 'taberian', {})
+    if empty(w) || w.popup_id != popup_id__a
+      continue
+    endif
+
+    for nr in range(w.tabs->len())->reverse()
+      if w.tabs[nr].col_in_popup < mousepos.wincol
+        if key__a == "\<LeftMouse>"
+          win_gotoid(winid)
+          Goto_tab_nr(nr)
+        elseif key__a == "\<MiddleMouse>"
+          var winid_bkp = win_getid()
+          noautocmd win_gotoid(winid)
+          Close_tab(nr)
+          noautocmd win_gotoid(winid_bkp)
+        endif
+        return true
+      endif
+    endfor
+  endfor
+
+  return false
+enddef
+
+export def Render_all_windows(winids__a = gettabinfo(tabpagenr())[0].windows)
+  for winid in winids__a
     win_execute(winid, 'S__update_current_window()')
   endfor
 enddef
@@ -205,7 +329,7 @@ export def Confirm_window_close()
   if len(w:taberian.tabs) > 1
     echo 'This window has ' .. len(w:taberian.tabs) .. ' tabs open: '
     echo w:taberian.tabs->deepcopy()->map((_, tab) => fnamemodify(bufname(tab.bufnr), ':t'))->string()
-    echo 'Are you sure you wish to close the window (yN):'
+    echo 'Close the window (yN):'
     var choice = nr2char(getchar())
     redraw
     if choice != 'y'
@@ -215,32 +339,43 @@ export def Confirm_window_close()
   close
 enddef
 
+export def On_WinClosed(winid__a: number)
+  var w = getwinvar(winid__a, 'taberian', {})
+  if empty(w)
+    return
+  endif
+  popup_close(w.popup_id)
+enddef
+
 export def State_export(): list<any>
   var state = []
   for tabinfo in gettabinfo()
-    var tab = {
+    var t = {
       tabnr: tabinfo.tabnr,
       windows: [],
     }
     for winid in tabinfo.windows
-      var win = gettabwinvar(tab.tabnr, winid, 'taberian', {})->deepcopy()
+      var win = gettabwinvar(t.tabnr, winid, 'taberian', {})->deepcopy()
       if empty(win) || len(win.tabs) < 2 # only save if more than 1 tab
         continue
       endif
 
-      # convert bufnrs to file paths:
       for tab in win.tabs
+        # convert bufnrs to file paths:
         tab.buffer = fnamemodify(bufname(tab.bufnr), ':~:.')
         unlet tab.bufnr
+        unlet tab.col_in_popup
+        unlet tab.title
       endfor
 
       win.winnr = win_id2tabwin(winid)[1]
       unlet win.prev_nr
+      unlet win.popup_id
 
-      add(tab.windows, win)
+      add(t.windows, win)
     endfor
-    if !empty(tab.windows)
-      add(state, tab)
+    if !empty(t.windows)
+      add(state, t)
     endif
   endfor
   return state
@@ -253,22 +388,24 @@ export def State_import(state__a: list<any>)
     if empty(tabs)
       continue
     endif
-    var tab = tabs[0]
+    var t = tabs[0]
 
     for winid in tabinfo.windows
       var [_, winnr] = win_id2tabwin(winid)
-      var wins = tab.windows->deepcopy()->filter((_, val) => val.winnr == winnr)
+      var wins = t.windows->deepcopy()->filter((_, val) => val.winnr == winnr)
       if empty(wins)
         continue
       endif
       var win = wins[0]
 
       unlet win.winnr
+      win.prev_nr = -1
+      win.popup_id = -1
 
       # convert file paths to bufnrs:
       for tab in win.tabs
         execute 'badd ' .. tab.buffer
-        tab.bufnr = bufnr(tab.buffer)
+        extend(tab, S__create_tab(bufnr(tab.buffer)))
         unlet tab.buffer
       endfor
 

@@ -3,13 +3,14 @@
 Author:         Sergey Vlasov <sergey@vlasov.me>
 Licence:        Vim licence, see |license|
 Site:           https://github.com/noscript/taberian.vim
-Version:        0.5
+Version:        0.6
 
 ================================================================================
 CONTENTS                                                     *taberian-contents*
 
     Intro...................................................|taberian-intro|
     Mappings.............................................|taberian-mappings|
+    Mouse...................................................|taberian-mouse|
     Commands.............................................|taberian-commands|
     Functions...........................................|taberian-functions|
     Variables...........................................|taberian-variables|
@@ -92,6 +93,12 @@ using this example:
 >
 
 ================================================================================
+MOUSE                                                           *taberian-mouse*
+
+<LeftMouse>          Select the tab under mouse pointer.
+<MiddleMouse>        Close the tab under mouse pointer.
+
+================================================================================
 COMMANDS                                                     *taberian-commands*
 
 :TaberianNewTab                 See |taberian-new-tab|.
@@ -134,4 +141,26 @@ VARIABLES                                                   *taberian-variables*
 Example:
 >
     g:taberian_no_default_mappings = true
+<
+
+*g:taberian#hide_tab_index*           Define this variable to hide tab index.
+
+Example:
+>
+    g:taberian#hide_tab_index = true
+<
+
+*g:taberian#hide_bufnr*               Define this variable to hide buffer
+                                      number.
+Example:
+>
+    g:taberian#hide_bufnr = true
+<
+
+*g:taberian#separator*                Define this variable with a string value
+                                      that will be used as tab separator.
+                                      Default value: "▕" symbol (U+2595)
+Example to "hide" separator:
+>
+    g:taberian#separator = ' '
 <

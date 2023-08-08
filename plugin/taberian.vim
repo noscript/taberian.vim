@@ -10,11 +10,14 @@ import autoload 'taberian.vim'
 augroup Taberian
   autocmd!
   autocmd WinEnter,BufEnter,VimResized,SessionLoadPost * taberian#Render_all_windows()
+  autocmd WinResized * taberian#Render_all_windows(v:event.windows)
+  autocmd WinClosed * taberian#On_WinClosed(expand('<amatch>')->str2nr())
+  autocmd ColorScheme * taberian#On_Colorscheme()
   autocmd User TaberianChanged taberian#Render_current_window()
 augroup END
 
 command! -nargs=0 TaberianNewTab              taberian#Create_tab()
-command! -nargs=0 TaberianCloseCurrentTab     taberian#Close_current_tab()
+command! -nargs=0 TaberianCloseCurrentTab     taberian#Close_tab()
 command! -nargs=0 TaberianGotoLeftTab         taberian#Goto_tab_offset(-1)
 command! -nargs=0 TaberianGotoRightTab        taberian#Goto_tab_offset(+1)
 command! -nargs=0 TaberianMoveCurrentTabLeft  taberian#Move_current_tab_offset(-1)
